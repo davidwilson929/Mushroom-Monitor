@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"name": "Mushroom-Gateway",
+			"path": "Mushroom-Gateway"
+		},
+		{
+			"name": "Mushroom-Node",
+			"path": "Mushroom-Node"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"array": "cpp",
+			"memory": "cpp",
+			"ranges": "cpp",
+			"functional": "cpp",
+			"tuple": "cpp",
+			"utility": "cpp"
+		}
+	}
+}

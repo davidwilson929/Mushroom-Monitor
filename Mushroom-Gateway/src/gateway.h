@@ -3,6 +3,48 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 
+//-------- Debug Enabler --------
+// Uncomment to send debug messages over serial
+
+//#define DEBUG_MODE
+
+//-------------------------------
+
+//----- File System CLeaner -----
+// Uncomment to format file system on reset/power on
+
+//#define CLEAN_FS
+
+//-------------------------------
+
+void serialDebug(String debugString)
+{
+    #ifdef DEBUG_MODE
+    Serial.begin(115200);
+    Serial.println(debugString);
+    Serial.end();
+    delay(1000); //delay by 1 second so I have at least some idea of when shit is happening
+    #endif
+}
+
+void formatFS()
+{
+    #ifdef CLEAN_FS
+        serialDebug("Attempting to format file sytem . . .");
+        switch (LittleFS.format())
+        {
+        case true:
+            serialDebug("File system sucesfully formatted!");
+            break;
+        
+        case false:
+            serialDebug("File system formatting failed. No idea why, guess I can figure it out later if it ever happens?");
+            break;
+        }
+    #endif
+}
+
+
 typedef enum getCredentials
 {
     apSSID = 0, apPassword = 1, staSSID = 2, staPassword = 3
@@ -12,13 +54,18 @@ typedef enum getCredentials
 //Retrieve stored WiFi credentials from onboard flash
 String getCredentials(int8 credentialsRequired)
 {
-    bool success = LittleFS.begin(); //Mount FS and return error if fails
-    if (!success){return "Failed to mount filesystem";}
+    serialDebug("Attempting to retireve stored credentials  . . .");
+    bool success = LittleFS.begin(); //Attempt to mount file system
+    if (!success)
+    {
+        return "";
+        serialDebug("Failed to mount file system, unable to retrieve credentials");
+    }
 
     success = LittleFS.exists("/credentials.txt"); //Check if credentiials file exists
-    if (!success) //If no file return defaults
+    if (!success) //If no file return default AP SSID with no password and no STA credentials
     {
-        Serial.println("txt file dows not exist");
+        serialDebug("credentials.txt does not exist, returning default credentials");
         switch (credentialsRequired)
         {
         case 0:
@@ -28,81 +75,94 @@ String getCredentials(int8 credentialsRequired)
             return "";
             }
     }
-    Serial.println("File Exists");
-    File credentials = LittleFS.open("/credentials.txt", "r");
+    serialDebug("credentials.txt exists! Parsing file . . .");
+    File credentials = LittleFS.open("/credentials.txt", "r");//Open credentials file in ead only mode
     String returnString;
-    switch (credentialsRequired)
+    switch (credentialsRequired)//parse file and return resulting string depending on credential requested
     {
-    case apSSID:
-    Serial.println("Case APSSID"); //debug
-        for (int8 i = 0; i < credentialsRequired; i++)
-        {
-            credentials.readStringUntil(',');
+        case apSSID:
+            serialDebug("Parsing file for AP SSID . . .");
+            for (int8 i = 0; i < credentialsRequired; i++)
+            {
+                credentials.readStringUntil(',');
+            }
+
+            returnString = credentials.readStringUntil(',');
+
+            if(returnString == "")//Handle null
+            {
+                returnString = "Mushroom-Monitor";
+            }
+            credentials.close();
+            break;
+
+        case apPassword:
+            serialDebug("Parsing file for AP password . . .");
+
+            for (int8 i = 0; i < credentialsRequired; i++)
+            {
+                credentials.readStringUntil(',');
+            }
+
+            returnString = credentials.readStringUntil(',');
+            credentials.close();
+            break;
+
+        case staSSID:
+            Serial.println("Case STASSID");
+
+            for (int8 i = 0; i < credentialsRequired; i++)
+            {
+                credentials.readStringUntil(',');
+            }
+
+            returnString = credentials.readStringUntil(',');
+            credentials.close();
+            break;
+
+        case staPassword:
+            Serial.println("Case STAPASS"); //debug
+
+            for (int8 i = 0; i < credentialsRequired; i++)
+            {
+                credentials.readStringUntil(',');
+            }
+
+            returnString = credentials.readStringUntil(',');
+            credentials.close();
+            break;
+
+        default:
+            returnString = "";
         }
-        returnString = credentials.readStringUntil(',');
-        if(returnString == ""){returnString = "Mushroom-Monitor";}//Handle null
-        credentials.close();
-        break;
-    case apPassword:
-        Serial.println("Case APPASS"); //debug
 
-        for (int8 i = 0; i < credentialsRequired; i++)
-        {
-            credentials.readStringUntil(',');
-        }
-        returnString = credentials.readStringUntil(',');
-        credentials.close();
-        break;
-    case staSSID:
-        Serial.println("Case STASSID");//debug
-
-        for (int8 i = 0; i < credentialsRequired; i++)
-        {
-            credentials.readStringUntil(',');
-        }
-        returnString = credentials.readStringUntil(',');
-        credentials.close();
-        break;
-
-    case staPassword:
-        Serial.println("Case STAPASS"); //debug
-
-        for (int8 i = 0; i < credentialsRequired; i++)
-        {
-            credentials.readStringUntil(',');
-        }
-        returnString = credentials.readStringUntil(',');
-        credentials.close();
-        break;
-    default:
-        returnString = "";
-    }
-
-    Serial.println("Returned Value: " + returnString);
+    serialDebug("Returned credential: " + returnString);
     return returnString;
 }
-//update WiFi credentials while in AP mode
-bool updateCredentials(String apSSID, String apPassword, String staSSID, String staPassword)
-{   
-    if (LittleFS.exists("/credentials.txt")) //Check for existing credentials file and copy data if null entered
-    {
 
-        if (apSSID == "")
+
+    //update WiFi credentials while in AP mode
+    bool updateCredentials(String apSSID, String apPassword, String staSSID, String staPassword)
+    {   
+        if (LittleFS.exists("/credentials.txt")) //Check for existing credentials file and copy data if null entered
         {
-            apSSID = getCredentials(0);   
-        }
-        if (apPassword == "")
-        {
-            apPassword = getCredentials(1);
-        }
-        if (staSSID == "")
-        {
-            staSSID = getCredentials(2);
-        }
-        if (staPassword == "")
-        {
-            staPassword = getCredentials(3);
-        }
+
+            if (apSSID == "")
+            {
+                apSSID = getCredentials(0);   
+            }
+            if (apPassword == "")
+            {
+                apPassword = getCredentials(1);
+            }
+            if (staSSID == "")
+            {
+                staSSID = getCredentials(2);
+            }
+            if (staPassword == "")
+            {
+                staPassword = getCredentials(3);
+            }
     }
     //Save new credentials to file
     File credentials = LittleFS.open("/credentials.txt", "w");

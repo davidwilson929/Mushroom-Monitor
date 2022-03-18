@@ -32,16 +32,7 @@ Hardware functions
   - Add hardware reset button to restore default credentials i.e. MUSHRROM-GATEWAY and no pass or STA credentials
 
 */
-// ------- Debug Enabler --------
-#define DEBUG_MODE
-//-------------------------------
-void serialDebug(String debugString)
-{
-#ifdef DEBUG_MODE
-  Serial.println(debugString);
-#endif
-  
-}
+
 // -------Global Variables-------
 bool AP_Active = false;
 bool STA_Active = false;
@@ -106,16 +97,7 @@ void handleDownload()
 
 void setup() {
 
-//Uncomment to clean FS
-//LittleFS.begin();
-//LittleFS.format();
-//LittleFS.end();
-//
-  //Start Serial for debgging
-  Serial.begin(115200);
-  delay(500);
-  Serial.println("Serial communication started at 115200 baud"); //debug
-  delay(500);
+  serialDebug("Serial debugging enabled . . .");
 
   //Attempt to fetch credentials
   String AP_SSID = getCredentials(apSSID);
@@ -123,7 +105,8 @@ void setup() {
   String STA_SSID = getCredentials(staSSID);
   String STA_Password = getCredentials(staPassword);
 
-  WiFi.mode(WIFI_AP_STA); //Dual WiFi mode
+  //Start WifI in both AP and STA modes
+  WiFi.mode(WIFI_AP_STA);
   AP_Active = WiFi.softAP(AP_SSID, AP_Password); //Start Gateway AP
   if(AP_Active)
   {

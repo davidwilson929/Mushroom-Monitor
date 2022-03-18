@@ -1,0 +1,1 @@
+The included STEP files have been designed for 3D prining, specifically on an FDM machine. All parts are screw fit so a reasonably well tuned printer is required.
