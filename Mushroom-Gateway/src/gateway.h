@@ -6,7 +6,7 @@
 //-------- Debug Enabler --------
 // Uncomment to send debug messages over serial
 
-//#define DEBUG_MODE
+#define DEBUG_MODE
 
 //-------------------------------
 
@@ -20,10 +20,12 @@
 void serialDebug(String debugString)
 {
     #ifdef DEBUG_MODE
-    Serial.begin(115200);
-    Serial.println(debugString);
-    Serial.end();
-    delay(1000); //delay by 1 second so I have at least some idea of when shit is happening
+    if (!Serial)
+        {
+            Serial.begin(115200);
+        }
+        Serial.println(debugString);
+        delay(1000); //delay by 1 second so I have at least some idea of when shit is happening
     #endif
 }
 

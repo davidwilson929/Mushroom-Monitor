@@ -96,7 +96,12 @@ void handleDownload()
 }
 
 void setup() {
-
+  Serial.begin(115200);
+    while (!Serial)
+    {
+      //wait for connect
+    }
+    
   serialDebug("Serial debugging enabled . . .");
 
   //Attempt to fetch credentials
@@ -105,46 +110,47 @@ void setup() {
   String STA_SSID = getCredentials(staSSID);
   String STA_Password = getCredentials(staPassword);
 
-  //Start WifI in both AP and STA modes
+  //Start WifI in both AP and STA
+  
   WiFi.mode(WIFI_AP_STA);
   AP_Active = WiFi.softAP(AP_SSID, AP_Password); //Start Gateway AP
   if(AP_Active)
   {
-    Serial.println("Sucessfully deployed AP with SSID " + AP_SSID);
-    Serial.print("AP IP address is ");
-    Serial.println(WiFi.softAPIP());
+    serialDebug("Sucessfully deployed AP with SSID " + AP_SSID);
   }
   else
   {
-    Serial.println("Failed to depoly AP");
+    serialDebug("Failed to depoly AP");
   }
 
-  Serial.println("");
-
+  //Connect to WiFi network as STA
   if (STA_SSID == "")//Check for null credentials
-  {Serial.println("No STA credentials stored, not attempting to connect to WiFi");}
+  {
+    serialDebug("No STA SSID stored, not attempting to connect to WiFi");
+  }
   else if(STA_Password == "")
-  {Serial.println("No STA credentials stored, not attempting to connect to WiFi");}
+  {
+    serialDebug("No STA password stored, not attempting to connect to WiFi");
+  }
   else
   {
-      STA_Active = WiFi.begin(STA_SSID, STA_Password); //Start Gateway STA
-      Serial.print("Connecting");    
-      for (int8 i = 0; i < 30 && WiFi.status() != WL_CONNECTED; i++)
+      STA_Active = WiFi.begin(STA_SSID, STA_Password);
+      serialDebug("Attempting to connect to network " + STA_SSID);    
+      for (int8 i = 0; i < 30 && WiFi.status() != WL_CONNECTED; i++)//Wait until connected, 30 second timeout
       {
         delay(1000);
-        Serial.print(" .");
       }
 
       if(WiFi.status() == WL_CONNECTED)
       {
-        Serial.println("");
-        Serial.println("Succesfully connected to " + STA_SSID);
+        serialDebug("Succesfully connected to " + STA_SSID);
       }
       else
       {
-        Serial.println("Failed to connect to WiFi as station, aboring process");
+        serialDebug("Failed to connect to network " + STA_SSID);
       }
   }
+
   //Handlers for AP server
   AP_Server.on("/", handleConnect);
   AP_Server.on("/credentials", handleUpdateCredentials);

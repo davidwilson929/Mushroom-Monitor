@@ -3,10 +3,6 @@
 		{
 			"name": "Mushroom-Gateway",
 			"path": "Mushroom-Gateway"
-		},
-		{
-			"name": "Mushroom-Node",
-			"path": "Mushroom-Node"
 		}
 	],
 	"settings": {
