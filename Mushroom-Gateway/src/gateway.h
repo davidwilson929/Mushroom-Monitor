@@ -109,7 +109,7 @@ String getCredentials(int8 credentialsRequired)
             break;
 
         case staSSID:
-            Serial.println("Case STASSID");
+            serialDebug("Parsing file for STA SSID . . .");
 
             for (int8 i = 0; i < credentialsRequired; i++)
             {
@@ -121,7 +121,7 @@ String getCredentials(int8 credentialsRequired)
             break;
 
         case staPassword:
-            Serial.println("Case STAPASS"); //debug
+            serialDebug("Parsing file for STA password . . .");
 
             for (int8 i = 0; i < credentialsRequired; i++)
             {
@@ -144,9 +144,9 @@ String getCredentials(int8 credentialsRequired)
     //update WiFi credentials while in AP mode
     bool updateCredentials(String apSSID, String apPassword, String staSSID, String staPassword)
     {   
+        serialDebug("Attempting to update credentials . . .");
         if (LittleFS.exists("/credentials.txt")) //Check for existing credentials file and copy data if null entered
         {
-
             if (apSSID == "")
             {
                 apSSID = getCredentials(0);   
@@ -164,12 +164,17 @@ String getCredentials(int8 credentialsRequired)
                 staPassword = getCredentials(3);
             }
     }
-    //Save new credentials to file
-    File credentials = LittleFS.open("/credentials.txt", "w");
+    //Save new credentials to file3
+    serialDebug("Opening credentials.txt in write mode . . .");
+    File credentials = LittleFS.open("/credentials.txt", "w+");
+    String strCredentials;
     credentials.print(apSSID + ",");
     credentials.print(apPassword  + ",");
     credentials.print(staSSID  + ",");
     credentials.print(staPassword + ",");
+    credentials.seek(0, SeekCur);
+    strCredentials = credentials.readString();
+    serialDebug("credentials.txt updated to: " + strCredentials);
     credentials.close();
 
     return true;
